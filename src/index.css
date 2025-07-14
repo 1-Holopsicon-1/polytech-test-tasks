@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@tailwind utilities;
+
+#root {
+    background-color: #0f172a !important;
+    transition: background-color 0.3s !important;
+}
