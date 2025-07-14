@@ -10,8 +10,10 @@ const PublicationForm: React.FC<{ onSubmit: (publication: Omit<Publication, 'id'
         subtype: '',
         materialName: '',
         authorsFromMospolytech: '',
-        coAuthors: '',
-        contactInfo: '',
+        coAuthors: [] as string[],
+        contactName: '',
+        contactPhone: '',
+        contactEmail: '',
         expertiseResult: '',
         expertiseNumber: '',
         expertiseDate: '',
@@ -19,7 +21,45 @@ const PublicationForm: React.FC<{ onSubmit: (publication: Omit<Publication, 'id'
         expertiseEndDate: '',
         noStateSecrets: false
     });
-    
+    const [coAuthorInputs, setCoAuthorInputs] = useState<string[]>([]);
+    const [phoneError, setPhoneError] = useState('');
+    const [emailError, setEmailError] = useState('');
+
+    const phoneRegexp = /^\+?\d{1,3}[\s-]?\(?\d{3,4}\)?[\s-]?\d{2,3}[\s-]?\d{2,3}[\s-]?\d{2,3}$/;
+    const emailRegexp = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/;
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFormData({ ...formData, contactPhone: value });
+        setPhoneError(value && !phoneRegexp.test(value) ? 'Некорректный номер' : '');
+    };
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFormData({ ...formData, contactEmail: value });
+        setEmailError(value && !emailRegexp.test(value) ? 'Некорректный email' : '');
+    };
+
+    const handleAddCoAuthorField = () => {
+        setCoAuthorInputs([...coAuthorInputs, '']);
+    };
+    const handleChangeCoAuthorInput = (idx: number, value: string) => {
+        setCoAuthorInputs(coAuthorInputs.map((v, i) => i === idx ? value : v));
+    };
+    const handleSaveCoAuthor = (idx: number) => {
+        const value = coAuthorInputs[idx].trim();
+        if (value && !formData.coAuthors.includes(value)) {
+            setFormData({ ...formData, coAuthors: [...formData.coAuthors, value] });
+        }
+        setCoAuthorInputs(coAuthorInputs.filter((_, i) => i !== idx));
+    };
+    const handleCancelCoAuthor = (idx: number) => {
+        setCoAuthorInputs(coAuthorInputs.filter((_, i) => i !== idx));
+    };
+
+    const handleRemoveCoAuthor = (name: string) => {
+        setFormData({ ...formData, coAuthors: formData.coAuthors.filter(ca => ca !== name) });
+    };
+
     /*
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,10 +68,11 @@ const PublicationForm: React.FC<{ onSubmit: (publication: Omit<Publication, 'id'
     */
 
     const handleSave = () => {
-        /*if (formData.title && formData.author) {
-            onSubmit(formData);
-        }*/
-        onSubmit(formData);
+        const submitData = {
+            ...formData,
+            coAuthors: formData.coAuthors.join(', ')
+        };
+        onSubmit(submitData);
     };
 
     return (
@@ -122,28 +163,74 @@ const PublicationForm: React.FC<{ onSubmit: (publication: Omit<Publication, 'id'
                     {/* Соавторы */}
                     <div>
                         <label className="block text-sm font-medium form-label mb-1">
-                            Соавторы: <span className="form-label-secondary">(инициалы, фамилия, через запятую)</span>
+                            Соавторы:
                         </label>
-                        <input
-                            type="text"
-                            value={formData.coAuthors}
-                            onChange={(e) => setFormData({ ...formData, coAuthors: e.target.value })}
-                            placeholder="А.А. Иванов, Б.Б. Петров,..."
-                            className="w-full px-3 py-2 form-input"
-                        />
+                        <button type="button" className="form-save-btn rounded px-3 mb-2" onClick={handleAddCoAuthorField}>
+                            Добавить соавтора
+                        </button>
+                        {coAuthorInputs.map((input, idx) => (
+                            <div className="flex space-x-2 mb-2" key={idx}>
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={e => handleChangeCoAuthorInput(idx, e.target.value)}
+                                    placeholder="ФИО соавтора"
+                                    className="w-full px-3 py-2 form-input"
+                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveCoAuthor(idx); } }}
+                                    autoFocus
+                                />
+                                <button type="button" className="form-save-btn rounded px-3" onClick={() => handleSaveCoAuthor(idx)}>
+                                    +
+                                </button>
+                                <button type="button" className="form-cancel-btn rounded px-3" onClick={() => handleCancelCoAuthor(idx)}>
+                                    Отмена
+                                </button>
+                            </div>
+                        ))}
+                        <ul className="space-y-1">
+                            {formData.coAuthors.map((ca, idx) => (
+                                <li key={idx} className="flex items-center justify-between coauthor-item">
+                                    <span>{ca}</span>
+                                    <button type="button" className="form-cancel-btn rounded px-2 py-0.5 ml-2" onClick={() => handleRemoveCoAuthor(ca)}>Удалить</button>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
 
                     {/* Контактное лицо */}
                     <div>
                         <label className="block text-sm font-medium form-label mb-1">
-                            Контактное лицо (ФИО, телефон, почта):
+                            Контактное лицо:
                         </label>
-                        <textarea
-                            value={formData.contactInfo}
-                            onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
-                            rows={3}
-                            className="w-full px-3 py-2 form-input resize-none"
-                        />
+                        <div className="flex flex-col gap-3">
+                            <input
+                                type="text"
+                                value={formData.contactName}
+                                onChange={e => setFormData({ ...formData, contactName: e.target.value })}
+                                placeholder="ФИО"
+                                className="w-full px-3 py-2 form-input"
+                            />
+                            <div>
+                                <input
+                                    type="text"
+                                    value={formData.contactPhone}
+                                    onChange={handlePhoneChange}
+                                    placeholder="Телефон"
+                                    className={`w-full px-3 py-2 form-input${phoneError ? ' border-red-500' : ''}`}
+                                />
+                                {phoneError && <div className="text-red-500 text-xs mt-1">{phoneError}</div>}
+                            </div>
+                            <div>
+                                <input
+                                    type="email"
+                                    value={formData.contactEmail}
+                                    onChange={handleEmailChange}
+                                    placeholder="E-mail"
+                                    className={`w-full px-3 py-2 form-input${emailError ? ' border-red-500' : ''}`}
+                                />
+                                {emailError && <div className="text-red-500 text-xs mt-1">{emailError}</div>}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Экспертиза публикации */}

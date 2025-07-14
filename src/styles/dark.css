@@ -65,3 +65,4 @@
 .add-publication-btn { background: #22c55e; color: #fff; padding: 0.5rem 1.5rem; border-radius: 0.375rem; font-weight: 500; transition: background 0.2s; }
 .add-publication-btn:hover { background: #4ade80; }
 .add-publication-icon { color: #fff; }
+.coauthor-item { background: #232a36; color: #f3f4f6; border-radius: 0.375rem; padding: 0.25rem 0.5rem; }
