@@ -5,6 +5,7 @@ import {FileText, Filter, Plus, Search} from "lucide-react";
 import PublicationForm from "../publications/PublicationForm.tsx";
 import {STATUS_LABELS} from "../publications/consts.ts";
 import PublicationCard from "../publications/PublicationCard.tsx";
+import SearchAndFilter from "../common/SearchAndFilter";
 
 const MyApplications: React.FC<{ darkMode: boolean }> = () => {
     /*const [publications, setPublications] = useState<Publication[]>([
@@ -63,7 +64,6 @@ const MyApplications: React.FC<{ darkMode: boolean }> = () => {
                 setPublications(transformedPublications);
             } catch (error) {
                 console.error('Error fetching publications:', error);
-                // Оставляем пустой массив или показываем ошибку
             } finally {
                 setLoading(false);
             }
@@ -82,10 +82,11 @@ const MyApplications: React.FC<{ darkMode: boolean }> = () => {
         );
     }
     const filteredPublications = publications.filter(pub => {
+        const trimmedSearch = searchTerm.trim();
         const searchText = (pub.title || pub.materialName || '').toLowerCase();
         const authorText = (pub.author || pub.authorsFromMospolytech || '').toLowerCase();
-        const matchesSearch = searchText.includes(searchTerm.toLowerCase()) ||
-            authorText.includes(searchTerm.toLowerCase());
+        const matchesSearch = searchText.includes(trimmedSearch.toLowerCase()) ||
+            authorText.includes(trimmedSearch.toLowerCase());
         const matchesFilter = filterStatus === 'all' || pub.status === filterStatus;
         return matchesSearch && matchesFilter;
     });
@@ -131,31 +132,13 @@ const MyApplications: React.FC<{ darkMode: boolean }> = () => {
                 />
             )}
 
-            <div className="mb-6 flex items-center space-x-4">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 search-icon w-5 h-5" />
-                    <input
-                        type="text"
-                        placeholder="Поиск по названию или автору..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 search-input"
-                    />
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Filter className="w-5 h-5 filter-icon" />
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value as Publication['status'] | 'all')}
-                        className="filter-select"
-                    >
-                        <option value="all">Все статусы</option>
-                        {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                            <option key={key} value={key}>{label}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
+            <SearchAndFilter
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filterStatus={filterStatus}
+                setFilterStatus={v => setFilterStatus(v as Publication['status'] | 'all')}
+                statusLabels={STATUS_LABELS}
+            />
 
             <div className="space-y-4">
                 {filteredPublications.map((publication) => (
